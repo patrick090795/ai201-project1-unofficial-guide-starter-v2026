@@ -99,9 +99,14 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
         splitting on a character count?
     """
     chunks: list[Chunk] = []
+
     for doc in documents:
-     # Split whenever a Markdown heading starts.
-        sections = re.split(r"(?=^#{1,2}\s)", doc.text, flags=re.MULTILINE)
+        lines = doc.text.strip().splitlines()
+
+        # Save the top-level document title, such as "# Brightwater"
+        title = lines[0].strip() if lines and lines[0].startswith("# ") else ""
+
+        sections = re.split(r"(?=^##\s)", doc.text, flags=re.MULTILINE)
 
         index = 0
 
@@ -110,6 +115,14 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
 
             if not section:
                 continue
+
+            # Skip the title-only part because it will be added to each section.
+            if section == title:
+                continue
+
+            # Add the town/document title so each chunk has context.
+            if title and not section.startswith(title):
+                section = f"{title}\n\n{section}"
 
             chunks.append(
                 Chunk(
