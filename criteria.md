@@ -23,8 +23,8 @@ For at least 4 of my 5 test questions, the retrieved chunks include one that
 contains the answer.
 
 **Why this target:**
-<!-- e.g. "One of my questions is about a topic only two documents mention, so
-     I expect that one to be hard." -->
+
+ My five test questions ask about clear facts that are written in the city guide documents. I chose 4 of 5 because I expect the retriever to find the right information most of the time, but one question may still be harder because similar information can appear in more than one document. A lower target would be too easy.
 
 ---
 
@@ -33,68 +33,44 @@ contains the answer.
 Every answer the system produces names at least one source document.
 
 **Why this target:**
-<!-- Why all five and not four? What about your setup makes that achievable —
-     or what would have to go wrong for it not to be? -->
+
+The system is supposed to answer from the documents and show where the information came from. Because of that, I expect every answer to name at least one source. If an answer has no source, it would be hard to check whether the answer is really based on the documents. 
 
 ---
 
 ## 3. The relevance gate stops out-of-corpus questions
 
 When I ask a question my documents clearly don't cover, the relevance gate
-stops it and the system returns "I don't have enough information about that" —
+stops it and the system returns "I don't have enough information about that" -
 in at least 4 of 5 tries.
-
-<!-- The five questions are the ones in `OUT_OF_SCOPE` at the bottom of
-     `questions.py`, and `run_eval.py` puts them through the gate and writes
-     what happened into your run log. Swap them for your own if you'd rather —
-     just keep five of them, or the "4 of 5" above has nothing to be 4 of. -->
-
+ 
 **Why this target:**
-<!-- What did your distances look like when you set the cutoff in Milestone 4?
-     Was there a clean gap, or did the two groups overlap? -->
+
+The relevance gate should stop questions that are clearly not covered by the city guide documents. I chose 4 of 5 because I expect it to reject most unrelated questions, but one question may still look similar to something in the corpus and pass the gate by mistake. More than one failure would show that the cutoff may need more tuning. 
 
 ---
 
-## 4. Something about your chunks
+## 4. Chunks stay within one guide section
 
-<!-- YOU WRITE THIS ONE.
-
-     How would you know if your chunks were the right size? Name something
-     countable or observable.
-
-     Examples of the right shape — don't copy these, they should come from
-     what you actually saw in Milestone 3:
-       - "At least 4 of 5 sampled chunks read as a complete thought, with no
-          sentence cut in half at either end."
-       - "No chunk is shorter than 200 characters, since anything below that
-          in my corpus turned out to be a heading with no content under it." -->
-
-
+At least 4 of 5 sampled chunks should draw from a single labeled section of the guide, rather than blending material from two different sections.
 
 **Why this target:**
 
+When I reviewed the city guides, I saw that each one is organized into clearly separated sections like “Getting there,” “Eat and drink,” and “When to go.” Because those sections are fairly self‑contained, most chunks should naturally stay within one boundary. I chose 4 of 5 to allow for the occasional long section that may need to be split, while still ensuring that mixed‑section chunks remain rare. A target of 3 of 5 would tolerate too many chunks that blur unrelated topics, which would weaken retrieval quality.
 
 
 ---
 
-## 5. Your choice
+## 5. Correct source
 
-<!-- YOU WRITE THIS ONE TOO.
-
-     Pick something you actually care about getting right. It could be about
-     speed, about refusals, about a particular kind of question your corpus
-     handles badly, about source attribution being correct rather than merely
-     present — anything, as long as it names a number or an observable
-     outcome. -->
-
+For at least 4 of 5 answers, the system should cite a source document that really supports the answer
 
 
 **Why this target:**
 
-
+When I read the city guide documents, I noticed that some information appears in more than one file. For example, transportation information can appear in both a city guide and the regional transport guide. I want to make sure the system gives the right source, not just any source that looks related. I chose 4 of 5 because one mistake can happen when two documents have very similar information, but more than one mistake may show a problem with how the system tracks sources 
 
 ---
-
 <!-- ─────────────────────────────────────────────────────────────────────────
      UNIT 2 — read this before you change anything above.
 
