@@ -21,11 +21,15 @@
 
 ## What This Does
 
-<!-- Three or four sentences. Which corpus you picked, and the kinds of
-     questions your system answers. Write it for someone who has never seen
-     this repo.
+This project is a question-answering system built using the `city_guides`
+corpus. It lets users ask questions about places, transportation, food,
+accommodation, activities, and the best times to visit different towns.
 
-     Milestone 5. -->
+The system splits the guides into meaningful sections, stores them as
+embeddings, and retrieves the most relevant chunks for each question.
+It answers using only the retrieved documents and includes the source files
+used for the answer. If the documents do not contain enough relevant
+information, the system refuses to answer instead of making something up.
 
 ## Chunking Strategy
 
