@@ -174,66 +174,131 @@ before the model was called.
 
 ## Run Log — Before
 
-<!-- Your five criteria, three runs each. `python run_eval.py --label before`
-     runs the questions, puts the OUT_OF_SCOPE ones through the gate, and
-     writes it all into results/ for you. Targets come from criteria.md; the
-     verdict column is your call.
-
-     Criterion 3 is measured in one deterministic pass rather than three, so
-     the same number goes in all three run columns. That's correct, not lazy.
-
-     Milestone 1. -->
+The system was tested using the `city_guides` corpus with `top-k = 5`
+and a relevance cutoff of `0.55`. Each generated-answer question was
+run three times with caching disabled.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunks contain the answer | At least 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. The relevance gate stops out-of-corpus questions | At least 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Chunks stay within one guide section | At least 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Correct source | At least 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
 
-<!-- Underneath, paste the REAL output for each criterion from one of your
-     runs — the actual text your system produced, not a description of it.
-     Name the file and function that produced it. -->
+### Real output samples
+
+**Criterion 1 — Retrieved chunks contain the answer**
+
+Question: `How long does the train from Brightwater to the regional hub take?`
+
+Retrieved source: `guide_brightwater.md`, section `Getting there`.
+
+System answer:
+
+> The train from Brightwater to the regional hub takes 50 minutes
+> (according to `guide_brightwater.md` and `guide_regional_transport.md`).
+
+The retrieved results contained the relevant Brightwater transportation
+information, and the system produced the expected factual answer.
+
+**Criterion 2 — Every answer names a source**
+
+Question: `How many times a day does the bus run to Halden Bay?`
+
+System answer:
+
+> The bus to Halden Bay runs four times a day
+> (according to `guide_halden_bay.md` and `guide_regional_transport.md`).
+
+Every generated answer across all three runs named at least one source
+document.
+
+**Criterion 3 — The relevance gate stops out-of-corpus questions**
+
+The gate refused all five out-of-corpus questions:
+
+- What is the capital of Mongolia?
+- How do I change the oil in a diesel engine?
+- Who won the 1994 World Cup?
+- What is the recommended dosage of ibuprofen for a headache?
+- How do I write a for loop in Rust?
+
+Result: `5/5 refused`.
+
+**Criterion 4 — Chunks stay within one guide section**
+
+The five sampled top chunks stayed inside a single labeled section:
+
+- Brightwater train → `Getting there`
+- Brightwater visit months → `When to go`
+- Halden Bay bus → `Getting there`
+- Halden Bay visit months → `When to go`
+- Kestrelford Sunday bus → `Buses`
+
+Result: `5/5`.
+
+**Criterion 5 — Correct source**
+
+Question: `Does the Kestrelford bus service run on Sundays?`
+
+System answer:
+
+> No, the Kestrelford bus service does not run on Sundays
+> (`guide_regional_transport.md` and `guide_kestrelford.md`).
+
+The cited documents were among the retrieved sources and directly
+corresponded to the transportation question.
 
 ## Verdicts
 
-<!-- MET or MISSED for each of the five, against the target you wrote last
-     unit — not a new one. Plus a sentence on how you decided. That sentence
-     matters most where it was close.
+### 1. Retrieved chunks contain the answer — MET
 
-     If your target said 4 of 5 and your runs came out 4, 3, 4, that's a MISS.
-     The target has to hold, not show up occasionally.
+The target was for at least 4 of my 5 test questions to retrieve a chunk
+containing the answer. All 5 questions retrieved relevant chunks that contained
+the information needed to answer the question. The result was 5/5, so this
+criterion was met.
 
-     Milestone 2. -->
+### 2. Every answer names a source — MET
 
-| # | Criterion | Verdict | How I decided |
-|---|---|---|---|
-| 1 |  |  |  |
-| 2 |  |  |  |
-| 3 |  |  |  |
-| 4 |  |  |  |
-| 5 |  |  |  |
+The target was for every generated answer to name at least one source document.
+Across all five questions and all three runs, every answer included at least one
+source document. Therefore, this criterion was met.
+
+### 3. The relevance gate stops out-of-corpus questions — MET
+
+The target was for the relevance gate to refuse at least 4 of 5 clearly
+out-of-corpus questions. It refused all 5 questions, giving a result of 5/5.
+Therefore, this criterion was met.
+
+### 4. Chunks stay within one guide section — MET
+
+The target was for at least 4 of 5 sampled chunks to stay within one labeled
+guide section. All five sampled chunks stayed within a single section such as
+"Getting there," "When to go," or "Buses." The result was 5/5, so this
+criterion was met.
+
+### 5. Correct source — MET
+
+The target was for at least 4 of 5 answers to cite a source document that
+actually supports the answer. All five answers cited relevant documents that
+were present in the retrieval results and supported the information used in the
+answer. The result was 5/5, so this criterion was met.
 
 ## Diagnoses
 
-<!-- For each miss: which stage caused it, and how. The stage alone isn't
-     enough — you need the mechanism.
 
-     Not a diagnosis: "Question 3 didn't work."
-     A diagnosis:     "Question 3 asks about laundry costs. The answer is in
-                       one sentence that got split across two chunks, so
-                       neither chunk on its own contains it."
+None of the five acceptance criteria were missed in the Before evaluation.
 
-     The five stages: loading → chunking → embedding → retrieval → generation.
+The retrieval distances for the five in-corpus questions ranged from about
+0.199 to 0.294, while all five out-of-corpus questions had distances above
+0.80. This gave the relevance gate a clear separation between supported and
+unsupported questions.
 
-     Look for a pattern. If three misses all ask about numbers, that's one
-     problem, not three.
-
-     Missed nothing? Say so, then say honestly whether your targets were set
-     low, and which one you'd tighten and to what.
-
-     Milestone 3. -->
+Because all criteria passed, there was no failed pipeline stage to diagnose.
+However, Criterion 1 may have been somewhat conservative because the system
+retrieved the needed information for all 5 questions rather than the required
+4 of 5.
 
 ## The Improvement
 
