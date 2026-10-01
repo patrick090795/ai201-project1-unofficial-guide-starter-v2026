@@ -18,8 +18,11 @@ rest of the project if they were wrong:
 """
 
 import os
+import re
 import shutil
 from dataclasses import dataclass
+from rank_bm25 import BM25Okapi
+
 
 # Must be set BEFORE chromadb is imported. Without it, some Chroma versions
 # print "Failed to send telemetry event ..." on every single call — which looks
@@ -177,6 +180,9 @@ def build_index(
 
     return len(chunks)
 
+def _tokenize(text: str) -> list[str]:
+    """Simple tokenizer for BM25 keyword search."""
+    return re.findall(r"\b\w+\b", text.lower())
 
 def search(
     question: str,
@@ -185,9 +191,11 @@ def search(
     variant: str = "default",
 ) -> list[Result]:
     """
-    Retrieve the chunks closest in meaning to a question.
+    Retrieve chunks using hybrid search.
 
-    Returns them nearest-first, each with its distance.
+    Combines semantic vector similarity with BM25 keyword relevance.
+    The original cosine distance is kept in each Result so the existing
+    relevance gate still uses the same distance scale.
     """
     top_k = top_k or config.TOP_K
     name = config.collection_name(corpus, variant)
@@ -199,25 +207,57 @@ def search(
             f"No index called '{name}'. Run `python app.py index` first."
         ) from exc
 
+    # Retrieve all chunks semantically so hybrid ranking can consider
+    # both semantic similarity and exact keyword matches.
     raw = collection.query(
         query_embeddings=embed([question]),
-        n_results=min(top_k, collection.count()),
+        n_results=collection.count(),
     )
 
-    results: list[Result] = []
-    for text, meta, distance in zip(
-        raw["documents"][0], raw["metadatas"][0], raw["distances"][0]
+    documents = raw["documents"][0]
+    metadatas = raw["metadatas"][0]
+    distances = raw["distances"][0]
+
+    # BM25 keyword scores.
+    tokenized_documents = [_tokenize(text) for text in documents]
+    bm25 = BM25Okapi(tokenized_documents)
+    bm25_scores = bm25.get_scores(_tokenize(question))
+
+    # Normalize BM25 scores to roughly 0..1.
+    max_bm25 = max(bm25_scores) if len(bm25_scores) else 0
+    if max_bm25 > 0:
+        normalized_bm25 = [score / max_bm25 for score in bm25_scores]
+    else:
+        normalized_bm25 = [0.0 for _ in bm25_scores]
+
+    ranked = []
+
+    for text, meta, distance, keyword_score in zip(
+        documents, metadatas, distances, normalized_bm25
     ):
-        results.append(
-            Result(
-                text=text,
-                source=str(meta.get("source", "unknown")),
-                label=f"{meta.get('source', 'unknown')}#{meta.get('index', 0)}",
-                distance=float(distance),
-                produced_by=str(meta.get("produced_by", "unknown")),
+        # Cosine distance is lower-is-better, so convert it to a
+        # higher-is-better semantic score.
+        semantic_score = max(0.0, 1.0 - float(distance))
+
+        # Equal weighting keeps this experiment simple and measurable.
+        hybrid_score = (0.5 * semantic_score) + (0.5 * keyword_score)
+
+        ranked.append(
+            (
+                hybrid_score,
+                Result(
+                    text=text,
+                    source=str(meta.get("source", "unknown")),
+                    label=f"{meta.get('source', 'unknown')}#{meta.get('index', 0)}",
+                    distance=float(distance),
+                    produced_by=str(meta.get("produced_by", "unknown")),
+                ),
             )
         )
-    return results
+
+    ranked.sort(key=lambda item: item[0], reverse=True)
+
+    return [result for _, result in ranked[:top_k]]
 
 
 def index_exists(corpus: str | None = None, variant: str = "default") -> bool:

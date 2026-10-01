@@ -188,6 +188,7 @@ run three times with caching disabled.
 
 ### Real output samples
 
+
 **Criterion 1 — Retrieved chunks contain the answer**
 
 Question: `How long does the train from Brightwater to the regional hub take?`
@@ -302,25 +303,49 @@ retrieved the needed information for all 5 questions rather than the required
 
 ## The Improvement
 
-**What I changed:**
+## The Improvement
 
-**Why I picked it:**
+I added hybrid search by combining the existing semantic vector search with
+BM25 keyword search. I chose this because several of my questions contain exact
+place names and transportation terms such as Brightwater, Halden Bay, and
+Kestrelford. BM25 can give more weight to those exact terms while semantic
+search still captures meaning.
 
-<!-- Connect it to a specific diagnosis above in one sentence. If you can't,
-     you picked a fix because it sounded impressive. -->
+### Before vs. After
+
+| Criterion | Before | After |
+|---|---|---|
+| Retrieved chunks contain the answer | 5/5 | 5/5 |
+| Every answer names a source | 5/5 | 5/5 |
+| Relevance gate stops out-of-corpus questions | 5/5 | 5/5 |
+| Chunks stay within one guide section | 5/5 | 5/5 |
+| Correct source | 5/5 | 5/5 |
+
+The hybrid-search change did not improve the acceptance-criteria scores because
+the semantic-only system was already meeting all five criteria.
+
+It did change the retrieval ranking. For example, for the Brightwater train
+question, the regional transport guide moved higher in the retrieved results.
+However, the final answer remained correct before and after the change.
+
+Because the measured criteria stayed the same, I cannot claim that hybrid
+search improved the system based on this test. The result shows that the
+original semantic retrieval was already strong for these five questions.
 
 ### Run Log — After
 
-<!-- Same format, same five criteria, three runs each.
-     `python run_eval.py --label after` -->
+
+After adding hybrid search, I ran the same five test questions again using the
+same `city_guides` corpus, `top-k = 5`, relevance cutoff of `0.55`, and three
+runs per generated-answer question.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunks contain the answer | At least 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. The relevance gate stops out-of-corpus questions | At least 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Chunks stay within one guide section | At least 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Correct source | At least 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
 
 **Did it help?**
 
