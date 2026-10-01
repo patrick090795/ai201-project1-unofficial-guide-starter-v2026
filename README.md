@@ -1,6 +1,5 @@
 # The Unofficial Guide
 
-<!-- Replace this line with your name and which corpus you picked. -->
 
 > **This file is your submission.** Fill it in as you go — most sections get
 > written during the milestone that produces them, not at the end.
@@ -139,38 +138,34 @@ There was a clear gap between the two groups, so I chose 0.55 as the cutoff.
 
 ## How I Used AI
 
-**1.**
-I asked AI to help me improve the chunking strategy for the `city_guides`
-corpus. AI suggested splitting the documents by Markdown sections instead of
-using fixed-size character chunks. I tested that approach and later noticed
-that some chunks, such as "When to go," did not include the town name. I then
-updated the chunker so that each section also includes the document title.
-This improved retrieval because the chunk kept both the topic and the place
-name.
+I used AI during this unit to help me inspect my test results, identify mistakes
+in my evaluation setup, and make one measured improvement.
 
-**2.**
-I asked AI to help me understand the retrieval distance results and choose a
-relevance cutoff. AI helped me compare the five in-corpus distances with the
-five out-of-scope distances. The in-corpus questions ranged from about 0.1989
-to 0.2938, while the out-of-scope questions ranged from about 0.8026 to 0.9753.
-Based on that gap, I changed the cutoff from 0.6 to 0.55 and tested it again.
-The valid questions still passed, while unrelated questions were rejected
-before the model was called.
+One important moment was when my first Before evaluation used the
+`campus_life` corpus instead of the `city_guides` corpus. I shared the run output
+with AI, and it pointed out that the retrieved files were campus-related files
+such as course and dining documents. I then checked the command-line options,
+rebuilt the index with the correct `city_guides` corpus, and reran the
+evaluation.
 
+I also used AI to help interpret the Before results against my original
+acceptance criteria. I still checked the actual retrieved chunks and outputs
+myself before marking each criterion MET.
 
+For the improvement, I asked AI for help adding hybrid search to `store.py`.
+The suggested approach combined the existing semantic vector search with BM25
+keyword search while keeping the original cosine distance for the relevance
+gate. I implemented the change, ran `python test.py`, checked retrieval output,
+and then ran the full After evaluation.
 
-<!-- ── Stretch features ─────────────────────────────────────────────────────
-     Doing one? Say so here BEFORE you start. A feature this README never
-     claims earns nothing.
-     ───────────────────────────────────────────────────────────────────────── -->
+Finally, I used AI to help compare the Before and After results. The acceptance
+criteria stayed at 5/5, so I did not claim that hybrid search improved the
+system. I reported that it changed retrieval rankings but did not produce a
+measurable improvement on my current test set.
 
 ---
 
 # Unit 2
-
-<!-- These sections get ADDED to what's already above. Don't delete or rewrite
-     unit 1 — the point is that someone can see what you said before you knew
-     how it went. -->
 
 ## Run Log — Before
 
@@ -187,6 +182,12 @@ run three times with caching disabled.
 | 5. Correct source | At least 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
 
 ### Real output samples
+
+Evidence file: `results/run_2026-09-30_1914_before.md`
+
+Produced by: `run_eval.py::main`
+
+Retrieval produced by: `store.py::search`
 
 
 **Criterion 1 — Retrieved chunks contain the answer**
@@ -303,8 +304,6 @@ retrieved the needed information for all 5 questions rather than the required
 
 ## The Improvement
 
-## The Improvement
-
 I added hybrid search by combining the existing semantic vector search with
 BM25 keyword search. I chose this because several of my questions contain exact
 place names and transportation terms such as Brightwater, Halden Bay, and
@@ -349,26 +348,46 @@ runs per generated-answer question.
 
 **Did it help?**
 
-<!-- Say plainly whether it did, and how you know. If it made things worse,
-     say that — a change that backfired, honestly reported, earns full credit
-     and is more interesting than one that worked. What matters is that you can
-     tell.
-
-     Milestone 4. -->
+No measurable improvement was shown by the acceptance criteria. All five
+criteria scored 5/5 before and after the change. Hybrid search changed some
+retrieval rankings, but it did not improve the measured success rate on this
+test set.
 
 ## What's Still Broken
 
-<!-- For each criterion still missed after your fix: what you'd do about it,
-     and why you stopped where you did.
+After the hybrid-search improvement, none of my five acceptance criteria were
+still missed. The system continued to meet all five criteria in the After run.
 
-     "I ran out of time" is fine if it's true. Pretending nothing is left is
-     not.
+However, the evaluation also showed that hybrid search did not produce a
+measurable improvement in the acceptance-criteria scores. The Before and After
+results were both 5/5 across the measured criteria.
 
-     Milestone 5. -->
+The retrieval rankings changed in some cases, but the changes were not always
+clearly better. For example, some additional less-relevant guide files appeared
+in the top retrieved results after hybrid search was added.
+
+If I continued working on the system, I would test it with a larger and more
+difficult set of questions. I would especially include questions with similar
+place names, exact numbers, and information that appears in multiple guide
+documents. This would make it easier to determine whether hybrid search is
+actually better than semantic-only retrieval.
+
+I stopped here because the required improvement was implemented and measured,
+and the current acceptance criteria were already being met.
 
 ## What I'd Do Differently
 
-<!-- Knowing what you know now — which of your five criteria would you write
-     differently, and why?
+If I wrote the acceptance criteria again, I would make Criterion 1 stricter.
 
-     Milestone 5. -->
+My original criterion required the retrieved chunks to contain the answer for
+at least 4 of 5 questions. The system achieved 5 of 5 in both the Before and
+After evaluations, so the original target turned out to be fairly easy for this
+test set.
+
+In the next unit, I would change the target to 5 of 5, or make the criterion
+more demanding by requiring the correct answer-containing chunk to appear in
+the top three retrieved results.
+
+That would make the criterion more useful for distinguishing between a system
+that simply retrieves a relevant chunk somewhere in the results and one that
+ranks the best evidence near the top.
